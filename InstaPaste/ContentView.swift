@@ -21,11 +21,15 @@ struct ContentView: View {
 
             Color.clear
                 .tabItem {
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(Color.accentColor))
-                        .foregroundStyle(.white)
+                    Label {
+                        Text("Add")
+                    } icon: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .bold))
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(Color.accentColor))
+                            .foregroundStyle(.white)
+                    }
                 }
                 .tag(RootTab.add)
 
