@@ -6,6 +6,7 @@ struct Template: Identifiable, Codable, Hashable {
     var content: String
     var tags: [String]
     var createdAt: Date
+    var isFavorite: Bool
     var usageCount: Int
     var lastUsedAt: Date?
 
@@ -15,6 +16,7 @@ struct Template: Identifiable, Codable, Hashable {
         content: String,
         tags: [String] = [],
         createdAt: Date = .now,
+        isFavorite: Bool = false,
         usageCount: Int = 0,
         lastUsedAt: Date? = nil
     ) {
@@ -23,6 +25,7 @@ struct Template: Identifiable, Codable, Hashable {
         self.content = content.trimmingCharacters(in: .whitespacesAndNewlines)
         self.tags = Template.normalizedTags(tags)
         self.createdAt = createdAt
+        self.isFavorite = isFavorite
         self.usageCount = usageCount
         self.lastUsedAt = lastUsedAt
     }
@@ -56,6 +59,7 @@ extension Template {
             content: "Thanks for the time today. Here is a quick recap:\n• Goals aligned\n• Timeline confirmed\n• Next step: final review on Friday",
             tags: ["meeting", "team"],
             createdAt: .now.addingTimeInterval(-86_400 * 2),
+            isFavorite: true,
             usageCount: 2,
             lastUsedAt: .now.addingTimeInterval(-6_000)
         ),

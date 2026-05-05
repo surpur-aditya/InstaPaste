@@ -7,7 +7,7 @@ struct TemplateEditorSheet: View {
 
         var title: String {
             switch self {
-            case .create: return "Add"
+            case .create: return "New Template"
             case .edit: return "Edit Template"
             }
         }

@@ -56,6 +56,9 @@ enum TemplateSortingService {
 
     static func keyboardPriority(_ templates: [Template]) -> [Template] {
         templates.sorted { lhs, rhs in
+            if lhs.isFavorite != rhs.isFavorite {
+                return lhs.isFavorite && !rhs.isFavorite
+            }
             if lhs.usageCount != rhs.usageCount {
                 return lhs.usageCount > rhs.usageCount
             }

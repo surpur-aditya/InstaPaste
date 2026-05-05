@@ -63,6 +63,12 @@ final class TemplateStore: ObservableObject {
         persist()
     }
 
+    func toggleFavorite(id: UUID) {
+        guard let index = templates.firstIndex(where: { $0.id == id }) else { return }
+        templates[index].isFavorite.toggle()
+        persist()
+    }
+
     func markTemplateUsed(id: UUID) {
         guard let index = templates.firstIndex(where: { $0.id == id }) else { return }
         templates[index].usageCount += 1

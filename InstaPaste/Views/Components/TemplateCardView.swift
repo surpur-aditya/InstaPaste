@@ -16,10 +16,21 @@ struct TemplateCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: style == .grid ? 10 : 12) {
-            Text(template.title)
-                .font(style == .grid ? .headline.weight(.semibold) : .headline)
-                .foregroundStyle(.primary)
-                .lineLimit(style == .grid ? 3 : 2)
+            HStack(alignment: .top, spacing: 8) {
+                Text(template.title)
+                    .font(style == .grid ? .headline.weight(.semibold) : .headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(style == .grid ? 3 : 2)
+
+                Spacer(minLength: 0)
+
+                if template.isFavorite {
+                    Image(systemName: "star.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.top, 2)
+                }
+            }
 
             Text(template.previewText)
                 .font(style == .grid ? .footnote : .subheadline)

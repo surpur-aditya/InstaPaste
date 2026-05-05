@@ -31,6 +31,26 @@ struct InstaPasteTests {
     }
 
     @Test
+    func keyboardSortingPrefersFavoritesBeforeUsage() {
+        let favorite = Template(
+            title: "Favorite",
+            content: "A",
+            isFavorite: true,
+            usageCount: 0
+        )
+        let frequent = Template(
+            title: "Frequent",
+            content: "B",
+            usageCount: 9,
+            lastUsedAt: .now
+        )
+
+        let sorted = TemplateSortingService.keyboardPriority([frequent, favorite])
+
+        #expect(sorted.map(\.title) == ["Favorite", "Frequent"])
+    }
+
+    @Test
     func importExportRoundTripPreservesTemplates() throws {
         let templates = Template.sampleData
         let data = try TemplateImportExportService.encodeTemplates(templates)

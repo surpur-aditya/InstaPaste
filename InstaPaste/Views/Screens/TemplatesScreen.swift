@@ -31,6 +31,7 @@ struct TemplatesScreen: View {
             }
         }
         .navigationTitle("InstaPaste")
+        .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $viewModel.searchText, prompt: "Search templates")
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -104,21 +105,32 @@ struct TemplatesScreen: View {
     }
 
     private func templateRow(_ template: Template) -> some View {
-        Button {
+        TemplateCardView(template: template, style: .list)
+        .contentShape(Rectangle())
+        .onTapGesture {
             viewModel.markTemplateUsed(template)
-        } label: {
-            TemplateCardView(template: template, style: .list)
         }
-        .buttonStyle(.plain)
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button("Delete", role: .destructive) {
+            Button(role: .destructive) {
                 viewModel.deleteTemplate(template)
+            } label: {
+                Image(systemName: "trash")
             }
 
-            Button("Edit") {
+            Button {
                 editingTemplate = template
+            } label: {
+                Image(systemName: "pencil")
             }
             .tint(.blue)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                viewModel.toggleFavorite(template)
+            } label: {
+                Image(systemName: template.isFavorite ? "star.slash" : "star")
+            }
+            .tint(.yellow)
         }
     }
 
@@ -135,14 +147,21 @@ struct TemplatesScreen: View {
                 Button {
                     editingTemplate = template
                 } label: {
-                    Label("Edit", systemImage: "pencil")
+                    Image(systemName: "pencil")
                 }
                 .buttonStyle(.bordered)
 
                 Button(role: .destructive) {
                     viewModel.deleteTemplate(template)
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    viewModel.toggleFavorite(template)
+                } label: {
+                    Image(systemName: template.isFavorite ? "star.fill" : "star")
                 }
                 .buttonStyle(.bordered)
             }

@@ -51,6 +51,10 @@ final class TemplatesViewModel: ObservableObject {
         store.deleteTemplate(id: template.id)
     }
 
+    func toggleFavorite(_ template: Template) {
+        store.toggleFavorite(id: template.id)
+    }
+
     func markTemplateUsed(_ template: Template) {
         store.markTemplateUsed(id: template.id)
         HapticsService.lightImpact()
