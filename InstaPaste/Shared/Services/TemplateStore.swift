@@ -5,6 +5,9 @@ import Foundation
 final class TemplateStore: ObservableObject {
     @Published private(set) var templates: [Template] = []
 
+    private nonisolated static let templatesStorageKeyValue = "quickpaste.templates"
+    private nonisolated static let templatesUpdatedNotificationValue = "group.alpacas.quickpaste.templates-updated"
+
     private let defaults: UserDefaults
     private let previewMode: Bool
     private let templatesFileURL: URL
@@ -76,6 +79,13 @@ final class TemplateStore: ObservableObject {
         persist()
     }
 
+    func markTemplateUsedFromKeyboard(id: UUID) {
+        guard let index = templates.firstIndex(where: { $0.id == id }) else { return }
+        templates[index].usageCount += 1
+        templates[index].lastUsedAt = .now
+        persistAsyncSnapshot(templates)
+    }
+
     func exportData() throws -> Data {
         try TemplateImportExportService.encodeTemplates(templates)
     }
@@ -102,21 +112,60 @@ final class TemplateStore: ObservableObject {
     private func persist() {
         do {
             let data = try TemplateImportExportService.encodeTemplates(templates)
-            try FileManager.default.createDirectory(
-                at: templatesFileURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
+            try Self.write(
+                data: data,
+                to: templatesFileURL,
+                defaults: defaults
             )
-            try data.write(to: templatesFileURL, options: .atomic)
-            defaults.set(Date().timeIntervalSince1970, forKey: AppConfiguration.templatesStorageKey)
-            defaults.synchronize()
-            postTemplatesUpdatedNotification()
         } catch {
             assertionFailure("Failed to persist templates: \(error.localizedDescription)")
         }
     }
 
+    private func persistAsyncSnapshot(_ snapshot: [Template]) {
+        guard !previewMode else { return }
+
+        let defaults = defaults
+        let fileURL = templatesFileURL
+
+        Task.detached(priority: .utility) {
+            do {
+                let data = try Self.encodeSnapshot(snapshot)
+                try Self.write(
+                    data: data,
+                    to: fileURL,
+                    defaults: defaults
+                )
+            } catch {
+                assertionFailure("Failed to persist templates from keyboard: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    nonisolated private static func encodeSnapshot(_ templates: [Template]) throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(["templates": templates])
+    }
+
+    nonisolated private static func write(data: Data, to fileURL: URL, defaults: UserDefaults) throws {
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try data.write(to: fileURL, options: .atomic)
+        defaults.set(Date().timeIntervalSince1970, forKey: templatesStorageKeyValue)
+        defaults.synchronize()
+        postTemplatesUpdatedNotification()
+    }
+
     private func postTemplatesUpdatedNotification() {
-        let name = CFNotificationName(AppConfiguration.templatesUpdatedNotification as CFString)
+        Self.postTemplatesUpdatedNotification()
+    }
+
+    nonisolated private static func postTemplatesUpdatedNotification() {
+        let name = CFNotificationName(templatesUpdatedNotificationValue as CFString)
         CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), name, nil, nil, true)
     }
 }

@@ -59,6 +59,7 @@ enum TemplateSortingService {
             if lhs.isFavorite != rhs.isFavorite {
                 return lhs.isFavorite && !rhs.isFavorite
             }
+
             if lhs.usageCount != rhs.usageCount {
                 return lhs.usageCount > rhs.usageCount
             }
@@ -71,6 +72,28 @@ enum TemplateSortingService {
             case (.none, .some):
                 return false
             default:
+                return lhs.createdAt > rhs.createdAt
+            }
+        }
+    }
+
+    static func keyboardAllPriority(_ templates: [Template]) -> [Template] {
+        templates.sorted { lhs, rhs in
+            if lhs.isFavorite != rhs.isFavorite {
+                return lhs.isFavorite && !rhs.isFavorite
+            }
+
+            switch (lhs.lastUsedAt, rhs.lastUsedAt) {
+            case let (left?, right?) where left != right:
+                return left > right
+            case (.some, .none):
+                return true
+            case (.none, .some):
+                return false
+            default:
+                if lhs.usageCount != rhs.usageCount {
+                    return lhs.usageCount > rhs.usageCount
+                }
                 return lhs.createdAt > rhs.createdAt
             }
         }

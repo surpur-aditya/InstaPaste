@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var viewModel: TemplatesViewModel
     @State private var selectedTab: RootTab = .templates
+    @State private var lastContentTab: RootTab = .templates
     @State private var isPresentingComposer = false
     @State private var editingTemplate: Template?
 
@@ -21,17 +22,11 @@ struct ContentView: View {
 
             Color.clear
                 .tabItem {
-                    Label {
-                        Text("Add")
-                    } icon: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .bold))
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Color.accentColor))
-                            .foregroundStyle(.white)
-                    }
+                    Label("Add", systemImage: "plus")
+                        .labelStyle(.iconOnly)
+                        .opacity(0)
                 }
-                .tag(RootTab.add)
+                .tag(RootTab.compose)
 
             NavigationStack {
                 SettingsScreen()
@@ -41,10 +36,17 @@ struct ContentView: View {
             }
             .tag(RootTab.settings)
         }
+        .overlay(alignment: .bottom) {
+            floatingAddButton
+        }
         .onChange(of: selectedTab) { newValue in
-            guard newValue == .add else { return }
-            selectedTab = .templates
-            isPresentingComposer = true
+            switch newValue {
+            case .compose:
+                selectedTab = lastContentTab
+                isPresentingComposer = true
+            case .templates, .settings:
+                lastContentTab = newValue
+            }
         }
         .sheet(isPresented: $isPresentingComposer) {
             TemplateEditorSheet(
@@ -69,11 +71,29 @@ struct ContentView: View {
             .presentationDragIndicator(.visible)
         }
     }
+
+    private var floatingAddButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                isPresentingComposer = true
+            }
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .bold))
+                .frame(width: 58, height: 58)
+                .background(Circle().fill(Color.accentColor))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.bottom, 8)
+    }
 }
 
 private enum RootTab: Hashable {
     case templates
-    case add
+    case compose
     case settings
 }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TemplatesScreen: View {
     @EnvironmentObject private var viewModel: TemplatesViewModel
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var editingTemplate: Template?
 
     let onCreateTemplate: () -> Void
@@ -10,11 +11,7 @@ struct TemplatesScreen: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.accentColor.opacity(0.12), Color(.systemBackground)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            AppTheme.appBackground(for: colorScheme)
             .ignoresSafeArea()
 
             Group {
@@ -58,40 +55,32 @@ struct TemplatesScreen: View {
 
     @ViewBuilder
     private var content: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+        switch viewModel.layoutStyle {
+        case .list:
+            List {
                 if !viewModel.availableTags.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            Button {
-                                viewModel.selectedTag = nil
-                            } label: {
-                                TagChip(title: "All", isSelected: viewModel.selectedTag == nil)
-                            }
-                            .buttonStyle(.plain)
-
-                            ForEach(viewModel.availableTags, id: \.self) { tag in
-                                Button {
-                                    viewModel.selectedTag = viewModel.selectedTag == tag ? nil : tag
-                                } label: {
-                                    TagChip(title: tag, isSelected: viewModel.selectedTag == tag)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
+                    tagsFilterBar
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
 
-                switch viewModel.layoutStyle {
-                case .list:
-                    LazyVStack(spacing: 16) {
-                        ForEach(viewModel.filteredTemplates) { template in
-                            templateRow(template)
-                        }
+                ForEach(viewModel.filteredTemplates) { template in
+                    templateRow(template)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+        case .grid:
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if !viewModel.availableTags.isEmpty {
+                        tagsFilterBar
                     }
-                    .padding(.horizontal, 20)
-                case .grid:
+
                     LazyVGrid(columns: gridColumns, spacing: 16) {
                         ForEach(viewModel.filteredTemplates) { template in
                             templateGridItem(template)
@@ -99,18 +88,48 @@ struct TemplatesScreen: View {
                     }
                     .padding(.horizontal, 20)
                 }
+                .padding(.vertical, 20)
             }
-            .padding(.vertical, 20)
+        }
+    }
+
+    private var tagsFilterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                Button {
+                    viewModel.selectedTag = nil
+                } label: {
+                    TagChip(title: "All", isSelected: viewModel.selectedTag == nil)
+                }
+                .buttonStyle(.plain)
+
+                ForEach(viewModel.availableTags, id: \.self) { tag in
+                    Button {
+                        viewModel.selectedTag = viewModel.selectedTag == tag ? nil : tag
+                    } label: {
+                        TagChip(title: tag, isSelected: viewModel.selectedTag == tag)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
         }
     }
 
     private func templateRow(_ template: Template) -> some View {
         TemplateCardView(template: template, style: .list)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            viewModel.markTemplateUsed(template)
-        }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                viewModel.markTemplateUsed(template)
+            }
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                viewModel.toggleFavorite(template)
+            } label: {
+                Image(systemName: template.isFavorite ? "star.slash" : "star")
+            }
+            .tint(.yellow)
+
             Button(role: .destructive) {
                 viewModel.deleteTemplate(template)
             } label: {
@@ -124,14 +143,6 @@ struct TemplatesScreen: View {
             }
             .tint(.blue)
         }
-        .swipeActions(edge: .leading, allowsFullSwipe: false) {
-            Button {
-                viewModel.toggleFavorite(template)
-            } label: {
-                Image(systemName: template.isFavorite ? "star.slash" : "star")
-            }
-            .tint(.yellow)
-        }
     }
 
     private func templateGridItem(_ template: Template) -> some View {
@@ -139,7 +150,13 @@ struct TemplatesScreen: View {
             Button {
                 viewModel.markTemplateUsed(template)
             } label: {
-                TemplateCardView(template: template, style: .grid)
+                TemplateCardView(
+                    template: template,
+                    style: .grid,
+                    onToggleFavorite: {
+                        viewModel.toggleFavorite(template)
+                    }
+                )
             }
             .buttonStyle(.plain)
 
@@ -155,13 +172,6 @@ struct TemplatesScreen: View {
                     viewModel.deleteTemplate(template)
                 } label: {
                     Image(systemName: "trash")
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    viewModel.toggleFavorite(template)
-                } label: {
-                    Image(systemName: template.isFavorite ? "star.fill" : "star")
                 }
                 .buttonStyle(.bordered)
             }

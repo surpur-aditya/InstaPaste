@@ -30,6 +30,26 @@ enum AppConfiguration {
     }
 }
 
+enum AppTheme {
+    static let deepTeal = Color(red: 39 / 255, green: 60 / 255, blue: 61 / 255)
+    static let teal = Color(red: 89 / 255, green: 145 / 255, blue: 141 / 255)
+    static let mint = Color(red: 163 / 255, green: 205 / 255, blue: 197 / 255)
+    static let paleMint = Color(red: 219 / 255, green: 236 / 255, blue: 217 / 255)
+    static let tagFill = mint.opacity(0.18)
+
+    static func appBackground(for colorScheme: ColorScheme?) -> LinearGradient {
+        let top = colorScheme == .dark ? deepTeal.opacity(0.92) : paleMint.opacity(0.35)
+        let bottom = colorScheme == .dark ? teal.opacity(0.38) : Color(.systemBackground)
+        return LinearGradient(colors: [top, bottom], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    static func keyboardBackground(for colorScheme: ColorScheme?) -> LinearGradient {
+        let top = colorScheme == .dark ? deepTeal : deepTeal.opacity(0.95)
+        let bottom = colorScheme == .dark ? teal.opacity(0.45) : mint.opacity(0.35)
+        return LinearGradient(colors: [top, bottom], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
 enum AppearanceMode: String, CaseIterable, Identifiable {
     case system
     case light

@@ -8,6 +8,7 @@ struct TemplateCardView: View {
 
     let template: Template
     let style: Style
+    var onToggleFavorite: (() -> Void)? = nil
 
     private var tagsLine: String? {
         guard template.tags.isEmpty == false else { return nil }
@@ -24,11 +25,16 @@ struct TemplateCardView: View {
 
                 Spacer(minLength: 0)
 
-                if template.isFavorite {
-                    Image(systemName: "star.fill")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(.top, 2)
+                if style == .grid || template.isFavorite {
+                    Button {
+                        onToggleFavorite?()
+                    } label: {
+                        Image(systemName: template.isFavorite ? "star.fill" : "star")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(template.isFavorite ? Color.accentColor : .secondary)
+                            .padding(.top, 2)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 

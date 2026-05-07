@@ -5,43 +5,40 @@ final class KeyboardViewController: UIInputViewController {
     private let store = TemplateStore()
     private var hostingController: UIHostingController<KeyboardTemplatesView>?
     private let notificationName = CFNotificationName(AppConfiguration.templatesUpdatedNotification as CFString)
+    private var isObservingTemplateUpdates = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        registerForTemplateUpdates()
         embedKeyboard()
         refreshTemplates()
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        registerForTemplateUpdates()
         refreshTemplates()
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        refreshTemplates()
-    }
-
-    override func textDidChange(_ textInput: UITextInput?) {
-        super.textDidChange(textInput)
-        refreshTemplates()
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        unregisterForTemplateUpdates()
     }
 
     deinit {
-        CFNotificationCenterRemoveObserver(
-            CFNotificationCenterGetDarwinNotifyCenter(),
-            Unmanaged.passUnretained(self).toOpaque(),
-            notificationName,
-            nil
-        )
+        unregisterForTemplateUpdates()
     }
 
     private func embedKeyboard() {
         let keyboardView = KeyboardTemplatesView(
-            templates: store.keyboardTemplates(),
+            store: store,
             onPaste: { [weak self] template in
                 self?.insert(template)
+            },
+            onBackspace: { [weak self] in
+                self?.handleBackspace()
+            },
+            onEnter: { [weak self] in
+                self?.handleEnter()
             },
             onNextKeyboard: { [weak self] in
                 self?.advanceToNextInputMode()
@@ -64,24 +61,12 @@ final class KeyboardViewController: UIInputViewController {
         self.hostingController = hostingController
     }
 
-    private func updateKeyboard() {
-        hostingController?.rootView = KeyboardTemplatesView(
-            templates: store.keyboardTemplates(),
-            onPaste: { [weak self] template in
-                self?.insert(template)
-            },
-            onNextKeyboard: { [weak self] in
-                self?.advanceToNextInputMode()
-            }
-        )
-    }
-
     private func refreshTemplates() {
         store.loadTemplates()
-        updateKeyboard()
     }
 
     private func registerForTemplateUpdates() {
+        guard !isObservingTemplateUpdates else { return }
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
             Unmanaged.passUnretained(self).toOpaque(),
@@ -96,12 +81,33 @@ final class KeyboardViewController: UIInputViewController {
             nil,
             .deliverImmediately
         )
+        isObservingTemplateUpdates = true
+    }
+
+    private func unregisterForTemplateUpdates() {
+        guard isObservingTemplateUpdates else { return }
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            notificationName,
+            nil
+        )
+        isObservingTemplateUpdates = false
     }
 
     private func insert(_ template: Template) {
         textDocumentProxy.insertText(template.content)
-        store.markTemplateUsed(id: template.id)
+        store.markTemplateUsedFromKeyboard(id: template.id)
         HapticsService.lightImpact()
-        updateKeyboard()
+    }
+
+    private func handleBackspace() {
+        textDocumentProxy.deleteBackward()
+        HapticsService.lightImpact()
+    }
+
+    private func handleEnter() {
+        textDocumentProxy.insertText("\n")
+        HapticsService.lightImpact()
     }
 }
