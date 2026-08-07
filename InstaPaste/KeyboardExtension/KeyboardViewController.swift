@@ -34,12 +34,6 @@ final class KeyboardViewController: UIInputViewController {
             onPaste: { [weak self] template in
                 self?.insert(template)
             },
-            onBackspace: { [weak self] in
-                self?.handleBackspace()
-            },
-            onEnter: { [weak self] in
-                self?.handleEnter()
-            },
             onNextKeyboard: { [weak self] in
                 self?.advanceToNextInputMode()
             }
@@ -98,16 +92,6 @@ final class KeyboardViewController: UIInputViewController {
     private func insert(_ template: Template) {
         textDocumentProxy.insertText(template.content)
         store.markTemplateUsedFromKeyboard(id: template.id)
-        HapticsService.lightImpact()
-    }
-
-    private func handleBackspace() {
-        textDocumentProxy.deleteBackward()
-        HapticsService.lightImpact()
-    }
-
-    private func handleEnter() {
-        textDocumentProxy.insertText("\n")
         HapticsService.lightImpact()
     }
 }

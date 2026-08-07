@@ -29,7 +29,11 @@ struct TemplatesScreen: View {
         }
         .navigationTitle("InstaPaste")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $viewModel.searchText, prompt: "Search templates")
+        .searchable(
+            text: $viewModel.searchText,
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: "Search templates"
+        )
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Menu {
@@ -117,7 +121,13 @@ struct TemplatesScreen: View {
     }
 
     private func templateRow(_ template: Template) -> some View {
-        TemplateCardView(template: template, style: .list)
+        TemplateCardView(
+            template: template,
+            style: .list,
+            onToggleFavorite: {
+                viewModel.toggleFavorite(template)
+            }
+        )
             .contentShape(Rectangle())
             .onTapGesture {
                 viewModel.markTemplateUsed(template)
@@ -160,13 +170,14 @@ struct TemplatesScreen: View {
             }
             .buttonStyle(.plain)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Button {
                     editingTemplate = template
                 } label: {
                     Image(systemName: "pencil")
                 }
                 .buttonStyle(.bordered)
+                .frame(width: 44)
 
                 Button(role: .destructive) {
                     viewModel.deleteTemplate(template)
@@ -174,8 +185,10 @@ struct TemplatesScreen: View {
                     Image(systemName: "trash")
                 }
                 .buttonStyle(.bordered)
+                .frame(width: 44)
             }
             .font(.caption.weight(.semibold))
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }

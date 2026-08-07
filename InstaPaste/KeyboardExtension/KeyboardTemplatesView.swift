@@ -20,8 +20,6 @@ struct KeyboardTemplatesView: View {
     @State private var selectedFilter: KeyboardTemplateFilter = .all
 
     let onPaste: (Template) -> Void
-    let onBackspace: () -> Void
-    let onEnter: () -> Void
     let onNextKeyboard: () -> Void
 
     private let columns = [GridItem(.adaptive(minimum: 140), spacing: 10)]
@@ -102,32 +100,11 @@ struct KeyboardTemplatesView: View {
                 }
             }
 
-            HStack(spacing: 10) {
-                RepeatingKeyboardActionButton(
-                    action: onBackspace,
-                    initialDelay: 0.35,
-                    repeatInterval: 0.08
-                ) {
-                    keySurface(
-                        systemImage: "delete.left",
-                        foregroundColor: colorScheme == .dark ? .white : .primary,
-                        backgroundColor: Color.white.opacity(colorScheme == .dark ? 0.12 : 0.78)
-                    )
-                }
-
-                KeyboardActionButton(action: onEnter) {
-                    keySurface(
-                        systemImage: "return",
-                        foregroundColor: .white,
-                        backgroundColor: Color.accentColor.opacity(0.92)
-                    )
-                }
-            }
-            .padding(.horizontal, 14)
         }
         .padding(.top, 8)
         .padding(.bottom, 8)
         .background(AppTheme.keyboardBackground(for: colorScheme))
+        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22))
     }
 
     private var filterControls: some View {
@@ -183,22 +160,6 @@ struct KeyboardTemplatesView: View {
                 )
         )
     }
-
-    private func keySurface(
-        systemImage: String,
-        foregroundColor: Color,
-        backgroundColor: Color
-    ) -> some View {
-        Image(systemName: systemImage)
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(backgroundColor)
-            )
-            .foregroundStyle(foregroundColor)
-    }
 }
 
 private struct KeyboardActionButton<Label: View>: View {
@@ -210,47 +171,5 @@ private struct KeyboardActionButton<Label: View>: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: action)
             .accessibilityAddTraits(.isButton)
-    }
-}
-
-private struct RepeatingKeyboardActionButton<Label: View>: View {
-    let action: () -> Void
-    let initialDelay: TimeInterval
-    let repeatInterval: TimeInterval
-    @ViewBuilder let label: () -> Label
-
-    @State private var repeatingTask: Task<Void, Never>?
-
-    var body: some View {
-        label()
-            .contentShape(Rectangle())
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        guard repeatingTask == nil else { return }
-                        action()
-                        repeatingTask = Task {
-                            try? await Task.sleep(for: .seconds(initialDelay))
-                            while !Task.isCancelled {
-                                await MainActor.run {
-                                    action()
-                                }
-                                try? await Task.sleep(for: .seconds(repeatInterval))
-                            }
-                        }
-                    }
-                    .onEnded { _ in
-                        stopRepeating()
-                    }
-            )
-            .onDisappear {
-                stopRepeating()
-            }
-            .accessibilityAddTraits(.isButton)
-    }
-
-    private func stopRepeating() {
-        repeatingTask?.cancel()
-        repeatingTask = nil
     }
 }

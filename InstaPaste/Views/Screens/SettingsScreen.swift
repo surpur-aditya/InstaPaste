@@ -43,13 +43,13 @@ struct SettingsScreen: View {
             }
 
             Section("Privacy") {
-                Label("No internet calls", systemImage: "wifi.slash")
+                Label("No internet required", systemImage: "wifi.slash")
                 Label("No tracking or analytics", systemImage: "hand.raised")
                 Label("All data stays on-device", systemImage: "internaldrive")
             }
 
             Section("Keyboard Setup") {
-                Text("Create an iOS Custom Keyboard Extension target in Xcode, assign the same App Group, and add the files in the KeyboardExtension folder to that target.")
+                Text("Go to Settings > General > Keyboard > Keyboards > Add New Keyboard, choose InstaPaste, then tap InstaPaste and enable Allow Full Access so the keyboard can read your saved templates from the shared app group.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

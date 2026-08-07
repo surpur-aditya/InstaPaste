@@ -3,51 +3,36 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var viewModel: TemplatesViewModel
     @State private var selectedTab: RootTab = .templates
-    @State private var lastContentTab: RootTab = .templates
     @State private var isPresentingComposer = false
     @State private var editingTemplate: Template?
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            NavigationStack {
-                TemplatesScreen(
-                    editingTemplate: $editingTemplate,
-                    onCreateTemplate: { isPresentingComposer = true }
-                )
-            }
-            .tabItem {
-                Label("Templates", systemImage: "square.grid.2x2")
-            }
-            .tag(RootTab.templates)
-
-            Color.clear
-                .tabItem {
-                    Label("Add", systemImage: "plus")
-                        .labelStyle(.iconOnly)
-                        .opacity(0)
+        VStack(spacing: 0) {
+            ZStack {
+                switch selectedTab {
+                case .templates:
+                    NavigationStack {
+                        TemplatesScreen(
+                            editingTemplate: $editingTemplate,
+                            onCreateTemplate: { isPresentingComposer = true }
+                        )
+                    }
+                case .settings:
+                    NavigationStack {
+                        SettingsScreen()
+                    }
                 }
-                .tag(RootTab.compose)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
 
-            NavigationStack {
-                SettingsScreen()
-            }
-            .tabItem {
-                Label("Settings", systemImage: "gearshape")
-            }
-            .tag(RootTab.settings)
+            bottomNavigationBar
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+                .background(.regularMaterial)
         }
-        .overlay(alignment: .bottom) {
-            floatingAddButton
-        }
-        .onChange(of: selectedTab) { newValue in
-            switch newValue {
-            case .compose:
-                selectedTab = lastContentTab
-                isPresentingComposer = true
-            case .templates, .settings:
-                lastContentTab = newValue
-            }
-        }
+        .background(Color(.systemBackground))
         .sheet(isPresented: $isPresentingComposer) {
             TemplateEditorSheet(
                 mode: .create,
@@ -72,6 +57,47 @@ struct ContentView: View {
         }
     }
 
+    private var bottomNavigationBar: some View {
+        HStack(spacing: 10) {
+            tabButton(tab: .templates, title: "Templates", systemImage: "square.grid.2x2")
+                .frame(maxWidth: .infinity)
+
+            floatingAddButton
+                .frame(width: 64, height: 64)
+
+            tabButton(tab: .settings, title: "Settings", systemImage: "gearshape")
+                .frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: 360)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.10), radius: 24, y: 10)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func tabButton(tab: RootTab, title: String, systemImage: String) -> some View {
+        let isSelected = selectedTab == tab
+
+        return Button {
+            selectedTab = tab
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 24, weight: .semibold))
+                Text(title)
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(isSelected ? Color.accentColor : .primary)
+            .frame(maxWidth: .infinity, minHeight: 58)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color(.systemBackground).opacity(0.62) : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     private var floatingAddButton: some View {
         Button {
             withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
@@ -79,21 +105,18 @@ struct ContentView: View {
             }
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 20, weight: .bold))
-                .frame(width: 58, height: 58)
+                .font(.system(size: 24, weight: .bold))
+                .frame(width: 64, height: 64)
                 .background(Circle().fill(Color.accentColor))
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
         }
         .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.bottom, 8)
     }
 }
 
 private enum RootTab: Hashable {
     case templates
-    case compose
     case settings
 }
 

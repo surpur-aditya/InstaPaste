@@ -25,14 +25,18 @@ struct TemplateCardView: View {
 
                 Spacer(minLength: 0)
 
-                if style == .grid || template.isFavorite {
+                if onToggleFavorite != nil {
                     Button {
                         onToggleFavorite?()
                     } label: {
                         Image(systemName: template.isFavorite ? "star.fill" : "star")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(template.isFavorite ? Color.accentColor : .secondary)
-                            .padding(.top, 2)
+                            .frame(width: 28, height: 28)
+                            .background(
+                                Circle()
+                                    .fill(Color(.systemBackground).opacity(0.92))
+                            )
                     }
                     .buttonStyle(.plain)
                 }
